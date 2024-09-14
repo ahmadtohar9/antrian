@@ -19,23 +19,16 @@ class AntrianBaru_model extends CI_Model {
         return strtoupper(substr($jenis, 0, 1)) . str_pad($total + 1, 3, '0', STR_PAD_LEFT);
     }
 
-    public function get_antrian_berikutnya($jenis, $loket) 
-    {
-        $this->db->where('jenis_antrian', $jenis);
-        $this->db->where('status', 'menunggu');
-        $this->db->order_by('waktu_daftar', 'ASC');
-        $this->db->limit(1);
-        
-        $antrian = $this->db->get('antrian')->row(); 
-
-        if ($antrian) {
-            log_message('debug', 'Antrian ditemukan: ' . json_encode($antrian));
-        } else {
-            log_message('debug', 'Tidak ada antrian yang menunggu.');
-        }
-
-        return $antrian;
-    }
+    public function get_antrian_berikutnya($jenis, $loket) {
+    $sql = "SELECT * FROM antrian 
+            WHERE jenis_antrian = ? AND status = 'menunggu' 
+            ORDER BY CAST(SUBSTRING(nomor_antrian, 2) AS UNSIGNED) ASC 
+            LIMIT 1";
+            
+    $query = $this->db->query($sql, array($jenis));
+    
+    return $query->row();
+}
 
     public function update_status($id_antrian, $status, $loket) 
     {

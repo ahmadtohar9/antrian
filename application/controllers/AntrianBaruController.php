@@ -6,6 +6,16 @@ class AntrianBaruController extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('AntrianBaru_model'); // Sesuaikan dengan nama model
+
+        // Tambahkan header CORS
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+        // Jika request method adalah OPTIONS, hentikan eksekusi
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            die();
+        }
     }
 
     // Menampilkan halaman untuk ambil antrian
@@ -18,7 +28,7 @@ class AntrianBaruController extends CI_Controller {
         $this->load->view('panggil_antrian_baru_view');
     }
 
-    // Menampilkan halaman untuk display antrian
+    // Menampilkan halaman display antrian
     public function display_antrian() {
         $this->load->view('display_antrian_baru_view');
     }
@@ -36,31 +46,26 @@ class AntrianBaruController extends CI_Controller {
         echo json_encode($data);
     }
 
-    public function panggil_antrian($jenis, $loket) 
-    {
-        // Memulai transaksi
+    // Fungsi untuk memanggil antrian berdasarkan jenis dan loket
+    public function panggil_antrian($jenis, $loket) {
         $this->db->trans_start();
 
         $antrian = $this->AntrianBaru_model->get_antrian_berikutnya($jenis, $loket);
         if ($antrian) {
             // Update status antrian menjadi 'dilayani'
             $this->AntrianBaru_model->update_status($antrian->id_antrian, 'dilayani', $loket);
-            
-            // Kirim notifikasi atau pembaruan langsung ke layar display
-            $this->db->trans_complete(); // Selesaikan transaksi
+            $this->db->trans_complete();
+
             if ($this->db->trans_status() === FALSE) {
-                // Jika terjadi masalah, rollback transaksi
                 echo json_encode(null);
             } else {
                 echo json_encode($antrian);
             }
         } else {
-            $this->db->trans_complete(); // Selesaikan transaksi
-            echo json_encode(null); // Jika tidak ada antrian yang menunggu
+            $this->db->trans_complete();
+            echo json_encode(null);
         }
     }
-
-
 
     // Fungsi untuk memanggil ulang antrian yang sama
     public function panggil_ulang_antrian($nomor_antrian) {

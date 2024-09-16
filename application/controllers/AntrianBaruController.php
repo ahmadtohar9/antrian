@@ -18,6 +18,19 @@ class AntrianBaruController extends CI_Controller {
         }
     }
 
+    public function start_websocket() {
+        // Jalankan WebSocket server sebagai proses background
+        exec('php ' . FCPATH . 'websocket_server.php > /dev/null 2>&1 &', $output, $return_var);
+
+        // Cek apakah WebSocket berhasil dijalankan
+        if ($return_var === 0) {
+            echo json_encode(['status' => 'success', 'message' => 'WebSocket server started successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to start WebSocket server']);
+        }
+    }
+
+
     // Menampilkan halaman untuk ambil antrian
     public function ambil_antrian_view() {
         $this->load->view('ambil_antrian_baru_view');
@@ -30,6 +43,8 @@ class AntrianBaruController extends CI_Controller {
 
     // Menampilkan halaman display antrian
     public function display_antrian() {
+         // Panggil method untuk memulai WebSocket
+        $this->start_websocket();
         $this->load->view('display_antrian_baru_view');
     }
 

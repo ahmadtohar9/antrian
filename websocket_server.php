@@ -43,6 +43,8 @@ class AntrianWebSocket implements MessageComponentInterface {
 }
 
 // Jalankan WebSocket server di port 8080
-$app = new Ratchet\App('localhost', 8080, '0.0.0.0');
+// $app = new Ratchet\App('localhost', 8080, '0.0.0.0');
+$app = new Ratchet\App('0.0.0.0', 8081, '0.0.0.0');
+
 $app->route('/antrian', new AntrianWebSocket, ['*']);
 $app->run();

@@ -2,7 +2,9 @@ var ws;
 
 $(document).ready(function() {
     // Buka WebSocket connection ke server
-    ws = new WebSocket('ws://localhost:8080/antrian');
+    // ws = new WebSocket('ws://localhost:8080/antrian');
+    var ws = new WebSocket('ws://localhost:8081/antrian');
+
 
     // Terima pesan dari WebSocket server
     ws.onmessage = function(event) {

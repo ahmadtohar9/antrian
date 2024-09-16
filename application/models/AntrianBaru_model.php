@@ -43,10 +43,21 @@ class AntrianBaru_model extends CI_Model {
         $this->db->order_by('loket', 'ASC');
         return $this->db->get('antrian')->result(); // Mengembalikan semua antrian yang sedang dilayani
     }
-
-    // Mendapatkan antrian berdasarkan nomor
+    // Fungsi untuk mengambil antrian berdasarkan nomor
     public function get_antrian_by_nomor($nomor_antrian) {
-        $this->db->where('nomor_antrian', $nomor_antrian);
-        return $this->db->get('antrian')->row(); // Mengambil antrian berdasarkan nomor
+        $this->db->where('nomor', $nomor_antrian); // Sesuaikan dengan kolom nomor di database
+        return $this->db->get('antrian_pendaftaran')->row(); // Ambil antrian berdasarkan nomor
     }
+
+    // Fungsi untuk menyimpan log panggilan ulang
+    public function simpan_nomor_terpanggil($nomor, $loket, $tipe_panggilan = 'normal') {
+        $data = [
+            'nomor' => $nomor,
+            'loket' => $loket,
+            'waktu_panggil' => date('Y-m-d H:i:s'),
+            'tipe_panggilan' => $tipe_panggilan // Tipe panggilan normal atau ulang
+        ];
+        $this->db->insert('log_panggilan_antrian', $data);
+    }
+
 }

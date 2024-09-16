@@ -11,11 +11,9 @@
     <!-- Pilih Loket -->
     <label for="loket">Pilih Loket:</label>
     <select id="loket">
-        <option value="1">Loket 1</option>
-        <option value="2">Loket 2</option>
-        <option value="3">Loket 3</option>
-        <option value="4">Loket 4</option>
-        <option value="5">Loket 5</option>
+        <?php foreach ($loket as $l): ?>
+            <option value="<?= $l->id ?>"><?= $l->nama_loket ?></option>
+        <?php endforeach; ?>
     </select>
 
     <button id="panggil-antrian">Panggil Antrian</button>
@@ -27,6 +25,7 @@
     <script>
       $(document).ready(function() {
         let nomorTerakhir = null;  // Variabel untuk menyimpan nomor terakhir yang dipanggil
+        let loketTerakhir = null;  // Variabel untuk menyimpan loket terakhir yang dipanggil
 
         // Fungsi untuk memanggil antrian baru
         $('#panggil-antrian').on('click', function() {
@@ -41,12 +40,11 @@
                         // Tampilkan nomor antrian
                         $('#nomor-antrian').text(data.nomor);
                         nomorTerakhir = data.nomor;  // Simpan nomor terakhir yang dipanggil
+                        loketTerakhir = loket;  // Simpan loket terakhir
                         $('#panggil-ulang-antrian').prop('disabled', false);  // Aktifkan tombol Panggil Ulang
 
-                        // Kirim data ke view display antrian
-                        if (window.opener) {
-                            window.opener.updateAntrian(data.nomor, loket); // Kirim nomor dan loket ke display antrian
-                        }
+                        // Simpan ke localStorage agar halaman display mendeteksi perubahan
+                        localStorage.setItem('nomorTerpanggil', JSON.stringify({ nomor: data.nomor, loket: loket }));
                     } else {
                         alert('Tidak ada antrian yang tersedia.');
                     }
@@ -57,31 +55,42 @@
             });
         });
 
-        // Fungsi untuk memanggil ulang antrian terakhir
-        $('#panggil-ulang-antrian').on('click', function() {
-            if (nomorTerakhir) {
-                var loket = $('#loket').val();  // Ambil value dari dropdown loket
-                $.ajax({
-                    url: '<?= base_url('AntrianController/panggil_ulang_antrian') ?>',
-                    type: 'POST',
-                    data: { nomor: nomorTerakhir, loket: loket },  // Kirim nomor dan loket
-                    success: function(response) {
-                        var data = JSON.parse(response);
-                        if (data.status === 'success') {
-                            $('#nomor-antrian').text(data.nomor);
-                            // Kirim data ke view display antrian (trigger polling baru di display)
-                            if (window.opener) {
-                                window.opener.updateAntrian(data.nomor, loket); // Kirim nomor dan loket ke display antrian
-                            }
-                        }
-                    },
-                    error: function() {
-                        alert('Terjadi kesalahan saat memanggil ulang antrian.');
-                    }
-                });
+     $('#panggil-ulang-antrian').on('click', function() {
+    if (nomorTerakhir) {
+        var loket = loketTerakhir;
+        $.ajax({
+            url: '<?= base_url('AntrianController/panggil_ulang_antrian') ?>',
+            type: 'POST',
+            data: { nomor: nomorTerakhir, loket: loket },
+            success: function(response) {
+                var data = JSON.parse(response);
+                if (data.status === 'success') {
+                    $('#nomor-antrian').text(data.nomor);
+
+                    // Trigger event panggil ulang ke display
+                    var event = new CustomEvent("panggilUlang", {
+                        detail: { nomor: data.nomor, loket: loket }
+                    });
+                    window.dispatchEvent(event);  // Kirim event ke display
+
+                    alert('Panggil ulang antrian berhasil.');
+                } else {
+                    alert('Terjadi kesalahan saat memanggil ulang antrian: ' + data.message);
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat memanggil ulang antrian.');
             }
         });
-     });
-    </script>
+    } else {
+        alert('Nomor antrian terakhir tidak ditemukan.');
+    }
+});
+
+
+
+    });
+</script>
+
 </body>
 </html>

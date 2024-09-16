@@ -14,40 +14,37 @@
         var lastNomor = '';  // Variabel untuk menyimpan nomor antrian terakhir yang ditampilkan
 
         // Fungsi untuk memperbarui nomor antrian dan memutar audio
-        function updateAntrian(nomor, loket) {
-            console.log("Update Antrian Dipanggil:", nomor, loket); // Debug log
-            $('#nomor_display').text('Nomor Antrian Dipanggil: ' + nomor);
+        function updateAntrian(nomor, loket, tipe = 'normal') {
+            console.log("Fungsi updateAntrian dijalankan");
+            console.log("Nomor yang akan di-update:", nomor, "Loket:", loket, "Tipe:", tipe);
 
-            // Panggil fungsi untuk memutar audio
+            $('#nomor_display').text('Nomor Antrian Dipanggil: ' + nomor + ' Loket: ' + loket + ' Tipe: ' + tipe);
+
+            // Fungsi untuk memutar audio bisa diaktifkan sesuai kebutuhan
             playAudio(nomor, loket);
         }
 
         // Fungsi untuk memutar audio
         function playAudio(nomorAntrian, loket) {
             var audioPath = "<?= base_url('audio/') ?>";
-            
             var nomor = nomorAntrian.replace('P', ''); // Menghapus huruf "P" dari nomor antrian
-            console.log("Playing audio for:", nomor, loket); // Debug log
 
-            // Urutan pemutaran audio: "antrian.wav", "p.wav", nomor.wav per digit, "counter.wav", nomor loket.wav
+            console.log("Memutar audio untuk nomor:", nomor, "loket:", loket);
+
             var audioQueue = [
                 new Audio(audioPath + 'antrian.wav'),  // antrian.wav
                 new Audio(audioPath + 'p.wav')         // p.wav
             ];
 
-            // Tambahkan setiap digit nomor antrian ke dalam queue
             for (var i = 0; i < nomor.length; i++) {
                 audioQueue.push(new Audio(audioPath + nomor[i] + '.wav'));
             }
 
-            // Tambahkan counter.wav dan nomor loket.wav
             audioQueue.push(new Audio(audioPath + 'counter.wav'));
             audioQueue.push(new Audio(audioPath + loket + '.wav'));
 
-            // Fungsi untuk memainkan audio secara berurutan
             function playQueue(index) {
                 if (index < audioQueue.length) {
-                    console.log("Playing audio:", audioQueue[index].src); // Debug log
                     audioQueue[index].play();
                     audioQueue[index].onended = function() {
                         playQueue(index + 1);
@@ -55,19 +52,29 @@
                 }
             }
 
-            // Mulai pemutaran audio dari urutan pertama
             playQueue(0);
         }
 
-        // Polling setiap 2 detik untuk mengecek nomor terbaru yang dipanggil
+        // Polling untuk mengecek nomor terbaru yang dipanggil dari server
         setInterval(function() {
+            console.log("Polling: Checking for updates...");
             $.getJSON('<?= base_url('AntrianController/get_antrian_terpanggil') ?>', function(data) {
                 if (data.status === 'success' && data.nomor !== lastNomor) {
-                    lastNomor = data.nomor;  // Simpan nomor terbaru
-                    updateAntrian(data.nomor, data.loket);
+                    console.log("Data diterima dari server:", data);
+                    lastNomor = data.nomor;
+                    updateAntrian(data.nomor, data.loket, 'normal');
+                } else {
+                    console.log("Nomor antrian tidak berubah:", lastNomor);
                 }
             });
-        }, 2000);  // Polling setiap 2 detik
+        }, 2000);
+
+        // Event listener untuk menerima event panggil ulang dari halaman lain
+        window.addEventListener("panggilUlang", function(event) {
+            var data = event.detail;
+            console.log("Event panggil ulang diterima:", data);
+            updateAntrian(data.nomor, data.loket, 'ulang');  // Panggil updateAntrian dengan tipe 'ulang'
+        });
     </script>
 </body>
 </html>
